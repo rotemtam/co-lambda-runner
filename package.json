@@ -1,0 +1,36 @@
+{
+  "name": "co-lambda-runner",
+  "version": "1.0.0",
+  "description": "an interface to run es6 generators as lambda functions",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha '**/**.spec.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotemtam/co-lambda-runner.git"
+  },
+  "keywords": [
+    "aws-lambda",
+    "co",
+    "node.js",
+    "es6",
+    "generators"
+  ],
+  "author": "Rotem Tamir",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rotemtam/co-lambda-runner/issues"
+  },
+  "homepage": "https://github.com/rotemtam/co-lambda-runner#readme",
+  "dependencies": {
+    "co": "^4.6.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "co-mocha": "^1.1.3",
+    "mock-lambda-context": "0.0.1",
+    "sinon": "^1.17.5",
+    "sinon-as-promised": "^4.0.2"
+  }
+}
