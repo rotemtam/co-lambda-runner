@@ -2,18 +2,11 @@
 
 const co = require('co');
 
-module.exports = function(lambda, config) {
-  config = config || {};
+let DEFAULTS = getOriginalDefaults()
 
-  config = {
-    addErrorPrefix: config.addErrorPrefix || 'Error: ',
-    notFoundRegexp: config.notFoundRegexp || /Not found:/,
-    notFoundMessage: config.notFoundMessage || 'Not found: could not find resource',
-    defaultMessage: config.defaultMessage || 'Internal Error',
-    onError: config.onError || Promise.resolve,
-    onSuccess: config.onSuccess || Promise.resolve,
-    debug: config.debug || false,
-  }
+const runnerFactory = function(lambda, config) {
+  config = config || {}
+  config = applyDefaults(config);
 
   function formatErrorMessage(err) {
     let  msg;
@@ -76,3 +69,34 @@ module.exports = function(lambda, config) {
       );
   }
 };
+
+runnerFactory.setDefaults = function(conf) {
+  DEFAULTS = Object.assign({}, DEFAULTS, conf)
+}
+
+runnerFactory.getDefaults = function() {
+  return DEFAULTS
+}
+
+runnerFactory.resetDefaults = function() {
+  DEFAULTS = getOriginalDefaults()
+}
+
+function getOriginalDefaults() {
+  return {
+    addErrorPrefix:  'Error: ',
+    notFoundRegexp:  /Not found:/,
+    notFoundMessage:  'Not found: could not find resource',
+    defaultMessage:  'Internal Error',
+    onError:  () => Promise.resolve(),
+    onSuccess:  () => Promise.resolve(),
+    debug: false,
+  }
+}
+
+function applyDefaults(conf) {
+  return Object.assign({}, DEFAULTS, conf)
+}
+
+
+module.exports = runnerFactory

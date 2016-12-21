@@ -27,6 +27,7 @@ describe('Function Runner', function() {
     }
 
    describe('Success', function() {
+     describe('With success callback', () => {
        let ctx = new Context()
          , e = {input: true}
          , successFn = sinon.stub().resolves()
@@ -57,6 +58,24 @@ describe('Function Runner', function() {
        it('should succeed with lambdas return', function() {
            expect(ctx.succeed.calledWith({output: true})).to.equal(true);
        });
+     });
+     describe('Without success callback', () => {
+       let ctx = new Context()
+         , e = {input: true}
+         , func = runner(lambdaSuccess);
+
+       before(function(done) {
+         func(e, ctx, done)
+       });
+
+       it('should run', function() {
+           expect(ctx.succeed.called).to.equal(true);
+       });
+
+       it('should succeed with lambdas return', function() {
+           expect(ctx.succeed.calledWith({output: true})).to.equal(true);
+       });
+     });
 
    });
 
@@ -151,6 +170,42 @@ describe('Function Runner', function() {
        it('error message should begin with "Error:" ', function() {
            let args = ctx.fail.getCall(0).args;
            expect(args[0]).to.match(/^Oh, crud!/)
+       });
+     });
+
+   });
+
+   describe('Configuration Defaults', () => {
+
+     describe('setDefaults({hello: world})', () => {
+       before(() => {
+         runner.setDefaults({hello: 'world'})
+       });
+       it('should set hello: world on defaults', () => {
+         expect(runner.getDefaults().hello).to.eql('world')
+       });
+       after(() => {
+         runner.resetDefaults()
+       });
+     });
+
+     describe('setDefaults({onSuccess})', () => {
+       let stub = sinon.stub().resolves();
+       let ctx = new Context()
+           , e = {}
+           , func;
+       before(() => {
+         runner.setDefaults({onSuccess: stub})
+         func = runner(lambdaSuccess)
+       });
+       before(function (done)  {
+         func(e, ctx, done)
+       });
+       it('should call success callback', () => {
+         expect(stub.called).to.be.ok
+       });
+       after(() => {
+         runner.resetDefaults()
        });
      });
 
