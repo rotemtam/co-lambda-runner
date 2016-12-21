@@ -11,7 +11,7 @@ require('sinon-as-promised');
 describe('Function Runner', function() {
 
     function *lambdaSuccess() {
-        return true
+        return {output: true}
     }
 
     function *lambdaFail() {
@@ -28,8 +28,11 @@ describe('Function Runner', function() {
 
    describe('Success', function() {
        let ctx = new Context()
-         , e = {}
-         , func = runner(lambdaSuccess);
+         , e = {input: true}
+         , successFn = sinon.stub().resolves()
+         , func = runner(lambdaSuccess, {
+           onSuccess: successFn
+         });
 
        before(function(done) {
          func(e, ctx, done)
@@ -39,8 +42,20 @@ describe('Function Runner', function() {
            expect(ctx.succeed.called).to.equal(true);
        });
 
+       it('should invoke the onSuccess callback', function() {
+         expect(successFn.calledOnce).to.eql(true)
+       })
+
+       it('should invoke the onSuccess callback with the request and response', () => {
+         let expectedPayload = {
+           request  : {input: true},
+           response : {output: true}
+         }
+         expect(successFn.calledWith(expectedPayload)).to.eql(true)
+       });
+
        it('should succeed with lambdas return', function() {
-           expect(ctx.succeed.calledWith(true)).to.equal(true);
+           expect(ctx.succeed.calledWith({output: true})).to.equal(true);
        });
 
    });
@@ -48,8 +63,11 @@ describe('Function Runner', function() {
    describe('Failure', function() {
      describe('Lambda throws error which contains Not found', function() {
        let ctx = new Context()
-           , e = {}
-           , func = runner(lambdaNotFound);
+           , e = {input: true}
+           , errorFn = sinon.stub().resolves()
+           , func = runner(lambdaNotFound, {
+             onError: errorFn
+           });
 
        before(function(done) {
            func(e, ctx, () => done())
@@ -57,6 +75,20 @@ describe('Function Runner', function() {
 
        it('should fail', function() {
            expect(ctx.fail.called).to.equal(true);
+       });
+
+       it('should invoke fail callback', function() {
+         expect(errorFn.called).to.equal(true)
+       })
+
+       it('should invoke fail callback with correct params', () => {
+         expect(errorFn.calledWith({
+           request: e,
+           response: {
+             error: new Error('Not found: couldnt find it'),
+             formattedError: 'Not found: couldnt find it'
+           }
+         })).to.eql(true)
        });
 
        it('error message should begin with "Not found:" ', function() {
