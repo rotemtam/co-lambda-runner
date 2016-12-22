@@ -2,21 +2,37 @@
 
 const co = require('co');
 
-module.exports = function(lambda, config) {
-  config = config || {};
+let DEFAULTS = getOriginalDefaults()
 
-  config = {
-    addErrorPrefix: config.addErrorPrefix || 'Error: ',
-    notFoundRegexp: config.notFoundRegexp || /Not found:/,
-    notFoundMessage: config.notFoundMessage || 'Not found: could not find resource',
-    defaultMessage: config.defaultMessage || 'Internal Error'
+const runnerFactory = function(lambda, config) {
+  config = config || {}
+  config = applyDefaults(config);
+
+  function formatErrorMessage(err) {
+    let  msg;
+
+    if( err  && config.notFoundRegexp.test(err)) {
+      msg = err.message || err || config.notFoundMessage;
+    } else {
+      msg = `${config.addErrorPrefix}${err.message || config.defaultMessage}`
+    }
+
+    return msg
+  }
+
+  function logError(msg) {
+    if (config.debug)
+      console.error(msg)
   }
 
   return function(e, ctx, cb) {
       co(
           function* () {
               let result = yield lambda(e, ctx);
-
+              yield config.onSuccess({
+                request: e,
+                response: result
+              })
               if (cb) {
                   cb(null, result)
               }
@@ -26,17 +42,61 @@ module.exports = function(lambda, config) {
       )
       .catch(
           function(err){
-              let  msg;
-              if( err  && config.notFoundRegexp.test(err)) {
-                msg = err.message || err || config.notFoundMessage;
-              } else {
-                msg = `${config.addErrorPrefix}${err.message || config.defaultMessage}`
-              }
-              ctx.fail(msg);
-              if(cb) {
-                  cb(err)
-              }
+
+              let msg = formatErrorMessage(err)
+
+              co(function *() {
+                try {
+                  yield config.onError({
+                    request: e,
+                    response: {
+                      error: err,
+                      formattedError: msg
+                    }
+                  })
+                } catch(err) {
+                  logError('Failed to invoke error callback')
+                  logError(err)
+                }
+
+                ctx.fail(msg);
+                if(cb) {
+                    cb(err)
+                }
+              })
+
           }
       );
   }
 };
+
+runnerFactory.setDefaults = function(conf) {
+  DEFAULTS = Object.assign({}, DEFAULTS, conf)
+}
+
+runnerFactory.getDefaults = function() {
+  return DEFAULTS
+}
+
+runnerFactory.resetDefaults = function() {
+  DEFAULTS = getOriginalDefaults()
+}
+
+function getOriginalDefaults() {
+  return {
+    addErrorPrefix:  'Error: ',
+    notFoundRegexp:  /Not found:/,
+    notFoundMessage:  'Not found: could not find resource',
+    defaultMessage:  'Internal Error',
+    onError:  () => Promise.resolve(),
+    onSuccess:  () => Promise.resolve(),
+    debug: false,
+  }
+}
+
+function applyDefaults(conf) {
+  return Object.assign({}, DEFAULTS, conf)
+}
+
+
+module.exports = runnerFactory
