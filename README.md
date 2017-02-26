@@ -35,6 +35,7 @@ Optionally, co-lambda-runner accepts a second
   * notFoundRegexp (regex, default: /Not found:/): A regular expression to run on the functions error message to determine that the cause of the error was a not-found resource. In this case LambdaRunner will not prepend the _addErrorPrefix_ message. This is needed to work with API Gateway as well, in order to allow you to set a RegEx for setting 404 errors.
   * notFoundMessage (string, default: 'Not found: could not find resource'): a default message to display if the notFoundRegexp matched and no err.message is present
   * defaultMessage (string, default: Internal Error): a default message to show if no err.message is present on the thrown error.
+  * onInit - function which returns a yieldable (promise, generator, etc.) to be called on lambda init
   * onSuccess - function which returns a yieldable (promise, generator, etc.) to be called on success
   * onError - function which returns a yieldable (promise, generator, etc.) to be called on fail
 
@@ -53,6 +54,11 @@ module.exports = LambdaRunner(generatorFunc, {
   },
   onSuccess: (payload) => {
     console.log(payload.response)
+    return Promise.resolve()
+  },
+  onInit: (payload) => {
+    console.log(payload.request) // get event
+    console.log(payload.context) // request context
     return Promise.resolve()
   }
 })

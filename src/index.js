@@ -28,6 +28,10 @@ const runnerFactory = function(lambda, config) {
   return function(e, ctx, cb) {
       co(
           function* () {
+              yield config.onInit({
+                request: e,
+                context: ctx
+              })
               let result = yield lambda(e, ctx);
               yield config.onSuccess({
                 request: e,
@@ -88,6 +92,7 @@ function getOriginalDefaults() {
     notFoundRegexp:  /Not found:/,
     notFoundMessage:  'Not found: could not find resource',
     defaultMessage:  'Internal Error',
+    onInit: () => Promise.resolve(),
     onError:  () => Promise.resolve(),
     onSuccess:  () => Promise.resolve(),
     debug: false,
