@@ -30,9 +30,11 @@ describe('Function Runner', function() {
      describe('With success callback', () => {
        let ctx = new Context()
          , e = {input: true}
+         , onInit = sinon.stub().resolves()
          , successFn = sinon.stub().resolves()
          , func = runner(lambdaSuccess, {
-           onSuccess: successFn
+           onSuccess: successFn,
+           onInit: onInit
          });
 
        before(function(done) {
@@ -42,6 +44,15 @@ describe('Function Runner', function() {
        it('should run', function() {
            expect(ctx.succeed.called).to.equal(true);
        });
+
+       it('should invoke the onInit callback', function() {
+         expect(onInit.calledOnce).to.eql(true)
+       })
+
+       it('should invoke the onInit callback', function() {
+         let invocationArgs = onInit.args[0][0]
+         expect(invocationArgs.request).to.eql({input: true})
+       })
 
        it('should invoke the onSuccess callback', function() {
          expect(successFn.calledOnce).to.eql(true)
@@ -83,9 +94,11 @@ describe('Function Runner', function() {
      describe('Lambda throws error which contains Not found', function() {
        let ctx = new Context()
            , e = {input: true}
+           , onInit = sinon.stub().resolves()
            , errorFn = sinon.stub().resolves()
            , func = runner(lambdaNotFound, {
-             onError: errorFn
+             onError: errorFn,
+             onInit: onInit
            });
 
        before(function(done) {
@@ -95,6 +108,11 @@ describe('Function Runner', function() {
        it('should fail', function() {
            expect(ctx.fail.called).to.equal(true);
        });
+
+       it('should invoke the onInit callback', function() {
+         let invocationArgs = onInit.args[0][0]
+         expect(invocationArgs.request).to.eql({input: true})
+       })
 
        it('should invoke fail callback', function() {
          expect(errorFn.called).to.equal(true)

@@ -1,6 +1,6 @@
 {
   "name": "co-lambda-runner",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "an interface to run es6 generators as lambda functions",
   "main": "src/index.js",
   "scripts": {
